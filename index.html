@@ -2464,32 +2464,28 @@
         return sub > 0 ? `${sym}${sub}` : sym;
       }
 
-      update(width, height, geometry, fallVelocity, anchorX, anchorY, hasUnanchoredPartner = false, isInfiniteMode = false) {
-        this.phase += 0.05;
+      update(width, height, geometry, fallVelocity, anchorX, anchorY, hasUnanchoredPartner = false, isInfiniteMode = false, dt = 1) {
+        this.phase += 0.05 * dt;
 
         // If NOT connected, drift according to level geometry & fall velocity
         if (!this.isConnected) {
           if (geometry === 'linear') {
-            // Linear Spacetime - gentle downward drift with wave modulation
             this.vy = fallVelocity + Math.sin(this.phase) * 0.15;
             this.vx = Math.sin(this.phase * 0.7) * 0.35;
-            this.x += this.vx;
-            this.y += this.vy;
+            this.x += this.vx * dt;
+            this.y += this.vy * dt;
 
-            // In Infinite Sandbox mode only, wrap at top
             if (isInfiniteMode && !hasUnanchoredPartner && this.y > height + 40) {
               this.y = -35;
               this.x = 40 + Math.random() * (width - 80);
               this.vx = 0;
             }
           } else {
-            // Radial Singularity - drift inward
             const dx = anchorX - this.x;
             const dy = anchorY - this.y;
             const dist = Math.hypot(dx, dy) || 1;
             const speed = fallVelocity;
 
-            // Inward radial vector + gentle orbital swirl
             const ux = dx / dist;
             const uy = dy / dist;
             const tx = -uy * 0.25;
@@ -2497,10 +2493,9 @@
 
             this.vx = (ux + tx) * speed;
             this.vy = (uy + ty) * speed;
-            this.x += this.vx;
-            this.y += this.vy;
+            this.x += this.vx * dt;
+            this.y += this.vy * dt;
 
-            // In Infinite Sandbox mode only, cycle outward
             if (isInfiniteMode && !hasUnanchoredPartner && dist < 45) {
               const angle = Math.random() * Math.PI * 2;
               const spawnDist = Math.max(width, height) * 0.55 + 30;
@@ -2509,18 +2504,18 @@
             }
           }
         } else {
-          // Connected nodes apply velocity damping
-          this.vx *= 0.88;
-          this.vy *= 0.88;
-          this.x += this.vx;
-          this.y += this.vy;
+          // Frame-rate independent damping
+          const damp = Math.pow(0.88, dt);
+          this.vx *= damp;
+          this.vy *= damp;
+          this.x += this.vx * dt;
+          this.y += this.vy * dt;
 
-          // Soft boundary clamping for connected graph
           const margin = 35;
-          if (this.x < margin) this.vx += 0.4;
-          if (this.x > width - margin) this.vx -= 0.4;
-          if (this.y < margin + 60) this.vy += 0.4;
-          if (this.y > height - margin - 30) this.vy -= 0.4;
+          if (this.x < margin) this.vx += 0.4 * dt;
+          if (this.x > width - margin) this.vx -= 0.4 * dt;
+          if (this.y < margin + 60) this.vy += 0.4 * dt;
+          if (this.y > height - margin - 30) this.vy -= 0.4 * dt;
         }
       }
 
@@ -5147,7 +5142,7 @@
       /* ========================================================================
          8. FORCE-DIRECTED GRAPH PHYSICS UPDATE
          ======================================================================== */
-      updatePhysics() {
+      updatePhysics(dt = 1) {
         // Stop physics update on win modals to freeze the final clean DAG
         if (this.isLevelCleared && document.getElementById('modal-win-reveal').classList.contains('open')) {
           return;
@@ -5183,12 +5178,12 @@
           const fy = (dy / dist) * force;
 
           if (!u.isAnchored) {
-            u.vx += fx;
-            u.vy += fy;
+            u.vx += fx * dt;
+            u.vy += fy * dt;
           }
           if (!v.isAnchored) {
-            v.vx -= fx;
-            v.vy -= fy;
+            v.vx -= fx * dt;
+            v.vy -= fy * dt;
           }
         }
 
@@ -5207,12 +5202,12 @@
             const fy = (dy / dist) * repulsion;
 
             if (!a.isAnchored) {
-              a.vx -= fx;
-              a.vy -= fy;
+              a.vx -= fx * dt;
+              a.vy -= fy * dt;
             }
             if (!b.isAnchored) {
-              b.vx += fx;
-              b.vy += fy;
+              b.vx += fx * dt;
+              b.vy += fy * dt;
             }
           }
         }
@@ -5220,8 +5215,8 @@
         // 3. Anchoring constraint on Root node
         const root = this.nodes.find(n => n.isAnchored);
         if (root) {
-          root.vx += (this.anchorX - root.x) * 0.12;
-          root.vy += (this.anchorY - root.y) * 0.12;
+          root.vx += (this.anchorX - root.x) * 0.12 * dt;
+          root.vy += (this.anchorY - root.y) * 0.12 * dt;
         }
 
         // 4. Update all nodes (drift or damp)
@@ -5241,7 +5236,7 @@
 
         this.nodes.forEach(n => {
           const hasUnanchoredPartner = unanchoredConnectedNodeIds.has(n.id);
-          n.update(this.width, this.height, this.geometry, this.fallVelocity, this.anchorX, this.anchorY, hasUnanchoredPartner, this.isInfiniteMode);
+          n.update(this.width, this.height, this.geometry, this.fallVelocity, this.anchorX, this.anchorY, hasUnanchoredPartner, this.isInfiniteMode, dt);
         });
 
         // 4b. Remove unanchored nodes that drift out of bounds (lost forever to the spacetime void)
@@ -5355,7 +5350,7 @@
         const unspawned = Math.max(0, this.roundPoolSize - this.spawnedCount);
         const unconnectedCount = this.nodes.length - connectedNodes.length;
         if (unspawned > 0 || this.isInfiniteMode) {
-          this.spawnTimer++;
+          this.spawnTimer += dt;
           const spawnInterval = this.geometry === 'linear' ? 140 : 120;
           if (this.spawnTimer > spawnInterval && unconnectedCount < 6) {
             this.spawnTimer = 0;
@@ -5399,7 +5394,7 @@
         this.shockwaves.length = sWrite;
 
         // 7. Energy dots timer
-        this.edgeEnergyTimer += 0.02;
+        this.edgeEnergyTimer += 0.02 * dt;
         if (this.edgeEnergyTimer > 1) this.edgeEnergyTimer = 0;
       }
 
@@ -5696,19 +5691,8 @@
         if (delta > 100) delta = 100;
         if (delta < 0) delta = 16.67;
 
-        this.physicsAccumulator = (this.physicsAccumulator || 0) + delta;
-        const step = 1000 / 60; // 16.667ms per tick (60Hz target)
-        let steps = 0;
-        // Jitter tolerance: step once smoothly when accumulator is near 60Hz (~14ms - 19ms)
-        // to completely eliminate 0-then-2 step oscillation from Android rAF timing variance
-        while (this.physicsAccumulator >= step * 0.85 && steps < 2) {
-          this.updatePhysics();
-          this.physicsAccumulator = Math.max(0, this.physicsAccumulator - step);
-          steps++;
-        }
-        if (this.physicsAccumulator > step * 1.5) {
-          this.physicsAccumulator = 0;
-        }
+        const dt = Math.min(delta / (1000 / 60), 2.5); // 1.0 at 60fps, 0.5 at 120fps
+        this.updatePhysics(dt);
 
         this.render();
         requestAnimationFrame((t) => this.gameLoop(t));
