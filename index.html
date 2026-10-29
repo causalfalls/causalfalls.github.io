@@ -2517,6 +2517,7 @@
         ctx.save();
         const isParent = this.causalRole === 'parent';
         const numSpokes = 6;
+        const stepAngle = (Math.PI * 2) / numSpokes;
         const baseAngle = this.phase * 0.12;
         const color = isParent ? '#FFB800' : '#00F0FF';
         const innerR = r + 3;
@@ -2528,7 +2529,7 @@
         ctx.lineWidth = 1.2;
         ctx.beginPath();
         for (let i = 0; i < numSpokes; i++) {
-          const theta = baseAngle + i * ((Math.PI * 2) / numSpokes);
+          const theta = baseAngle + i * stepAngle;
           const cosT = Math.cos(theta);
           const sinT = Math.sin(theta);
           ctx.moveTo(this.x + cosT * innerR, this.y + sinT * innerR);
@@ -2536,37 +2537,29 @@
         }
         ctx.stroke();
 
-        // 2. Animated Traveling Arrow Tips along the spokes (no save/restore or shadowBlur overhead)
+        // 2. Animated Traveling Arrow Tips along the spokes (batched per phase p, 2 strokes total)
         ctx.strokeStyle = color;
         ctx.lineWidth = 1.8;
         const wingLen = 4.2;
         const wingAngle = 2.45;
 
-        for (let i = 0; i < numSpokes; i++) {
-          const theta = baseAngle + i * ((Math.PI * 2) / numSpokes);
-          const cosT = Math.cos(theta);
-          const sinT = Math.sin(theta);
+        for (let p = 0; p < 2; p++) {
+          const t = ((this.phase * 0.45) + (p * 0.5)) % 1;
+          const alpha = Math.sin(t * Math.PI) * 0.95;
+          if (alpha <= 0.05) continue;
 
-          for (let p = 0; p < 2; p++) {
-            const t = ((this.phase * 0.45) + (p * 0.5)) % 1;
+          const dist = isParent ? (innerR + t * spokeLen) : (outerR - t * spokeLen);
 
-            let dist, arrowAngle;
-            if (isParent) {
-              dist = innerR + t * spokeLen;
-              arrowAngle = theta;
-            } else {
-              dist = outerR - t * spokeLen;
-              arrowAngle = theta + Math.PI;
-            }
-
-            const alpha = Math.sin(t * Math.PI) * 0.95;
-            if (alpha <= 0.05) continue;
-
+          ctx.globalAlpha = alpha;
+          ctx.beginPath();
+          for (let i = 0; i < numSpokes; i++) {
+            const theta = baseAngle + i * stepAngle;
+            const cosT = Math.cos(theta);
+            const sinT = Math.sin(theta);
+            const arrowAngle = isParent ? theta : theta + Math.PI;
             const tipX = this.x + cosT * dist;
             const tipY = this.y + sinT * dist;
 
-            ctx.globalAlpha = alpha;
-            ctx.beginPath();
             ctx.moveTo(
               tipX + Math.cos(arrowAngle + wingAngle) * wingLen,
               tipY + Math.sin(arrowAngle + wingAngle) * wingLen
@@ -2576,13 +2569,13 @@
               tipX + Math.cos(arrowAngle - wingAngle) * wingLen,
               tipY + Math.sin(arrowAngle - wingAngle) * wingLen
             );
-            ctx.stroke();
           }
+          ctx.stroke();
         }
         ctx.restore();
       }
 
-      draw(ctx, isSelected = false, glowSprites = null) {
+      draw(ctx, isSelected = false, glowSprites = null, bodySprites = null, game = null) {
         ctx.save();
 
         const pulseScale = 1 + Math.sin(this.phase) * 0.04;
@@ -2645,27 +2638,37 @@
             }
           }
 
-          const grad = ctx.createRadialGradient(this.x, this.y, 2, this.x, this.y, r);
-          if (isParent) {
-            grad.addColorStop(0, '#FFFDF0');
-            grad.addColorStop(0.4, '#FFB800');
-            grad.addColorStop(1, '#C86A00');
+          if (bodySprites) {
+            const bSprite = isParent
+              ? (this.isConnected ? bodySprites.parentConnected : bodySprites.parentUnconnected)
+              : (this.isConnected ? bodySprites.childConnected : bodySprites.childUnconnected);
+            if (bSprite) {
+              const sz = bSprite.logicalSize * (r / bSprite.nominalR);
+              ctx.drawImage(bSprite.canvas, this.x - sz / 2, this.y - sz / 2, sz, sz);
+            }
           } else {
-            grad.addColorStop(0, '#FFFFFF');
-            grad.addColorStop(0.4, '#00F0FF');
-            grad.addColorStop(1, '#005599');
+            const grad = ctx.createRadialGradient(this.x, this.y, 2, this.x, this.y, r);
+            if (isParent) {
+              grad.addColorStop(0, '#FFFDF0');
+              grad.addColorStop(0.4, '#FFB800');
+              grad.addColorStop(1, '#C86A00');
+            } else {
+              grad.addColorStop(0, '#FFFFFF');
+              grad.addColorStop(0.4, '#00F0FF');
+              grad.addColorStop(1, '#005599');
+            }
+
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = this.isConnected
+              ? (isParent ? '#FFE082' : '#E0F7FF')
+              : (isParent ? 'rgba(255, 224, 130, 0.85)' : 'rgba(128, 245, 255, 0.85)');
+            ctx.lineWidth = 2.2;
+            ctx.stroke();
           }
-
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.strokeStyle = this.isConnected
-            ? (isParent ? '#FFE082' : '#E0F7FF')
-            : (isParent ? 'rgba(255, 224, 130, 0.85)' : 'rgba(128, 245, 255, 0.85)');
-          ctx.lineWidth = 2.2;
-          ctx.stroke();
 
           // Anchor core marker if anchored root
           if (this.isAnchored) {
@@ -2677,12 +2680,17 @@
             ctx.setLineDash([]);
           }
 
-          // Label
-          ctx.fillStyle = '#060B18';
-          ctx.font = 'bold 13px JetBrains Mono, monospace';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(this.label, this.x, this.y + 0.5);
+          // Label (fast cached text sprite or fallback)
+          if (game && game.getTextSprite) {
+            const sprite = game.getTextSprite(this.label, 'bold 13px JetBrains Mono, monospace', '#060B18');
+            ctx.drawImage(sprite.canvas, Math.round(this.x - sprite.w / 2), Math.round(this.y + 0.5 - sprite.h / 2), sprite.w, sprite.h);
+          } else {
+            ctx.fillStyle = '#060B18';
+            ctx.font = 'bold 13px JetBrains Mono, monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(this.label, this.x, this.y + 0.5);
+          }
 
         } else if (this.type === 'latent') {
           // Latent Confounder: Dashed translucent circle with 'U'
@@ -2702,12 +2710,17 @@
           ctx.stroke();
           ctx.setLineDash([]);
 
-          // Glowing label
-          ctx.fillStyle = '#FFFFFF';
-          ctx.font = 'bold 14px JetBrains Mono, monospace';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(this.label, this.x, this.y + 0.5);
+          // Glowing label (fast cached text sprite or fallback)
+          if (game && game.getTextSprite) {
+            const sprite = game.getTextSprite(this.label, 'bold 14px JetBrains Mono, monospace', '#FFFFFF');
+            ctx.drawImage(sprite.canvas, Math.round(this.x - sprite.w / 2), Math.round(this.y + 0.5 - sprite.h / 2), sprite.w, sprite.h);
+          } else {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 14px JetBrains Mono, monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(this.label, this.x, this.y + 0.5);
+          }
 
         } else if (this.type === 'hazard') {
           // Hazard Node (Process Matrix / Loop Anomaly): Flickering purple
@@ -2729,12 +2742,17 @@
           ctx.lineWidth = 2.5;
           ctx.stroke();
 
-          // Loop anomaly icon: rotating ⟲
-          ctx.fillStyle = '#FFF';
-          ctx.font = 'bold 15px JetBrains Mono, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('⟲', this.x, this.y);
+          // Loop anomaly icon: rotating ⟲ (fast cached text sprite or fallback)
+          if (game && game.getTextSprite) {
+            const sprite = game.getTextSprite('⟲', 'bold 15px JetBrains Mono, sans-serif', '#FFF');
+            ctx.drawImage(sprite.canvas, Math.round(this.x - sprite.w / 2), Math.round(this.y - sprite.h / 2), sprite.w, sprite.h);
+          } else {
+            ctx.fillStyle = '#FFF';
+            ctx.font = 'bold 15px JetBrains Mono, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⟲', this.x, this.y);
+          }
         }
 
         // 3. Radial Role Indicators (Animated Inward/Outward Arrow Tips for Falling Nodes)
@@ -3533,6 +3551,8 @@
         this.edges = []; // array of { from: nodeId, to: nodeId }
         this.particles = [];
         this.shockwaves = [];
+        this.textCache = new Map();
+        this.bodySprites = null;
 
         // Anchors & Physics parameters
         this.anchorX = 0;
@@ -3826,6 +3846,82 @@
         };
       }
 
+      initBodySprites() {
+        this.bodySprites = {};
+        const dpr = this.dpr || 1;
+        const nominalR = 21;
+        const pad = 6;
+        const logicalSize = Math.ceil((nominalR + pad) * 2);
+        const center = logicalSize / 2;
+
+        const createBody = (isParent, isConnected) => {
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.ceil(logicalSize * dpr);
+          canvas.height = Math.ceil(logicalSize * dpr);
+          const ctx = canvas.getContext('2d');
+          ctx.scale(dpr, dpr);
+
+          const grad = ctx.createRadialGradient(center, center, 2, center, center, nominalR);
+          if (isParent) {
+            grad.addColorStop(0, '#FFFDF0');
+            grad.addColorStop(0.4, '#FFB800');
+            grad.addColorStop(1, '#C86A00');
+          } else {
+            grad.addColorStop(0, '#FFFFFF');
+            grad.addColorStop(0.4, '#00F0FF');
+            grad.addColorStop(1, '#005599');
+          }
+
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(center, center, nominalR, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = isConnected
+            ? (isParent ? '#FFE082' : '#E0F7FF')
+            : (isParent ? 'rgba(255, 224, 130, 0.85)' : 'rgba(128, 245, 255, 0.85)');
+          ctx.lineWidth = 2.2;
+          ctx.stroke();
+
+          return { canvas, logicalSize, nominalR };
+        };
+
+        this.bodySprites = {
+          parentConnected: createBody(true, true),
+          parentUnconnected: createBody(true, false),
+          childConnected: createBody(false, true),
+          childUnconnected: createBody(false, false)
+        };
+      }
+
+      getTextSprite(text, font, color) {
+        if (!this.textCache) this.textCache = new Map();
+        const dpr = this.dpr || 1;
+        const key = `${text}__${font}__${color}__${dpr}`;
+        let sprite = this.textCache.get(key);
+        if (sprite) return sprite;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.font = font;
+        const metrics = ctx.measureText(text);
+        const textW = Math.ceil(metrics.width) + 8;
+        const textH = 26;
+        canvas.width = Math.ceil(textW * dpr);
+        canvas.height = Math.ceil(textH * dpr);
+
+        ctx.scale(dpr, dpr);
+        ctx.font = font;
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, textW / 2, textH / 2);
+
+        sprite = { canvas, w: textW, h: textH };
+        this.textCache.set(key, sprite);
+        return sprite;
+      }
+
       updateBackgroundCanvas() {
         if (!this.width || !this.height) return;
         if (!this.bgCanvas) {
@@ -3924,7 +4020,9 @@
           }
         }
 
+        if (this.textCache) this.textCache.clear();
         this.initGlowSprites();
+        this.initBodySprites();
         this.updateBackgroundCanvas();
       }
 
@@ -5027,8 +5125,12 @@
           return;
         }
 
-        const nodeMap = new Map();
-        const connectedNodes = [];
+        if (!this._nodeMap) this._nodeMap = new Map();
+        this._nodeMap.clear();
+        const nodeMap = this._nodeMap;
+        if (!this._connectedNodes) this._connectedNodes = [];
+        this._connectedNodes.length = 0;
+        const connectedNodes = this._connectedNodes;
         for (let i = 0; i < this.nodes.length; i++) {
           const n = this.nodes[i];
           nodeMap.set(n.id, n);
@@ -5096,7 +5198,9 @@
 
         // 4. Update all nodes (drift or damp)
         // Check which unanchored nodes are part of a floating multi-node motif
-        const unanchoredConnectedNodeIds = new Set();
+        if (!this._unanchoredConnectedNodeIds) this._unanchoredConnectedNodeIds = new Set();
+        this._unanchoredConnectedNodeIds.clear();
+        const unanchoredConnectedNodeIds = this._unanchoredConnectedNodeIds;
         for (let i = 0; i < this.edges.length; i++) {
           const e = this.edges[i];
           const u = nodeMap.get(e.from);
@@ -5114,33 +5218,47 @@
 
         // 4b. Remove unanchored nodes that drift out of bounds (lost forever to the spacetime void)
         if (!this.isInfiniteMode) {
-          const lostNodes = this.nodes.filter(n => {
-            if (n.isConnected) return false;
-            if (this.geometry === 'linear') {
-              return n.y > this.height + 45;
-            } else {
-              return Math.hypot(n.x - this.anchorX, n.y - this.anchorY) < 38;
+          let hasLost = false;
+          for (let i = 0; i < this.nodes.length; i++) {
+            const n = this.nodes[i];
+            if (!n.isConnected) {
+              if (this.geometry === 'linear') {
+                if (n.y > this.height + 45) { hasLost = true; break; }
+              } else {
+                if (Math.hypot(n.x - this.anchorX, n.y - this.anchorY) < 38) { hasLost = true; break; }
+              }
             }
-          });
+          }
 
-          if (lostNodes.length > 0) {
-            const lostIds = new Set(lostNodes.map(n => n.id));
-            lostNodes.forEach(n => {
-              for (let i = 0; i < 7; i++) {
-                this.particles.push(new Particle(
-                  n.x, n.y,
-                  'rgba(140, 160, 210, 0.55)',
-                  (Math.random() - 0.5) * 2.2,
-                  (Math.random() - 0.5) * 2.2,
-                  0.4, 2.8
-                ));
+          if (hasLost) {
+            const lostNodes = this.nodes.filter(n => {
+              if (n.isConnected) return false;
+              if (this.geometry === 'linear') {
+                return n.y > this.height + 45;
+              } else {
+                return Math.hypot(n.x - this.anchorX, n.y - this.anchorY) < 38;
               }
             });
 
-            this.nodes = this.nodes.filter(n => !lostIds.has(n.id));
-            this.edges = this.edges.filter(e => !lostIds.has(e.from) && !lostIds.has(e.to));
-            this.updateHUD();
-            if (this.checkImpossibleWinCondition()) return;
+            if (lostNodes.length > 0) {
+              const lostIds = new Set(lostNodes.map(n => n.id));
+              lostNodes.forEach(n => {
+                for (let i = 0; i < 7; i++) {
+                  this.particles.push(new Particle(
+                    n.x, n.y,
+                    'rgba(140, 160, 210, 0.55)',
+                    (Math.random() - 0.5) * 2.2,
+                    (Math.random() - 0.5) * 2.2,
+                    0.4, 2.8
+                  ));
+                }
+              });
+
+              this.nodes = this.nodes.filter(n => !lostIds.has(n.id));
+              this.edges = this.edges.filter(e => !lostIds.has(e.from) && !lostIds.has(e.to));
+              this.updateHUD();
+              if (this.checkImpossibleWinCondition()) return;
+            }
           }
         } else {
           // Infinite Sandbox mode: wrap/recycle unanchored clusters together seamlessly
@@ -5207,7 +5325,7 @@
 
         // 5. Periodic spawning of new drifting entities from remaining round pool
         const unspawned = Math.max(0, this.roundPoolSize - this.spawnedCount);
-        const unconnectedCount = this.nodes.filter(n => !n.isConnected).length;
+        const unconnectedCount = this.nodes.length - connectedNodes.length;
         if (unspawned > 0 || this.isInfiniteMode) {
           this.spawnTimer++;
           const spawnInterval = this.geometry === 'linear' ? 140 : 120;
@@ -5225,7 +5343,7 @@
         // 5c. Check round pool depletion failure (all nodes spawned and fallen past or anchored)
         if (!this.isInfiniteMode && !this.isGameOver && !this.isLevelCleared) {
           if (unspawned === 0 && unconnectedCount === 0) {
-            const connectedCount = this.nodes.filter(n => n.isConnected).length;
+            const connectedCount = connectedNodes.length;
             const diamonds = this.diamondsCount || 0;
             if (connectedCount < this.minNodesRequired || diamonds < this.minDiamondsRequired) {
               this.triggerRoundFailed(connectedCount, diamonds);
@@ -5233,9 +5351,24 @@
           }
         }
 
-        // 6. Update Particles & Shockwaves
-        this.particles = this.particles.filter(p => p.update());
-        this.shockwaves = this.shockwaves.filter(s => s.update());
+        // 6. Update Particles & Shockwaves (in-place compaction without array allocation)
+        let pWrite = 0;
+        for (let i = 0; i < this.particles.length; i++) {
+          const p = this.particles[i];
+          if (p.update()) {
+            this.particles[pWrite++] = p;
+          }
+        }
+        this.particles.length = pWrite;
+
+        let sWrite = 0;
+        for (let i = 0; i < this.shockwaves.length; i++) {
+          const s = this.shockwaves[i];
+          if (s.update()) {
+            this.shockwaves[sWrite++] = s;
+          }
+        }
+        this.shockwaves.length = sWrite;
 
         // 7. Energy dots timer
         this.edgeEnergyTimer += 0.02;
@@ -5287,10 +5420,11 @@
 
         // 5. Draw Nodes
         const glowSprites = this.glowSprites;
+        const bodySprites = this.bodySprites;
         for (let i = 0; i < this.nodes.length; i++) {
           const n = this.nodes[i];
           const isSel = (n === this.selectedNode || n === this.dragSourceNode);
-          n.draw(ctx, isSel, glowSprites);
+          n.draw(ctx, isSel, glowSprites, bodySprites, this);
         }
 
         ctx.restore();
@@ -5333,13 +5467,13 @@
         if (!this.edges || this.edges.length === 0) return;
         const nodeMap = this.nodeMap;
 
+        ctx.save();
         for (let i = 0; i < this.edges.length; i++) {
           const edge = this.edges[i];
           const u = nodeMap ? nodeMap.get(edge.from) : this.nodes.find(n => n.id === edge.from);
           const v = nodeMap ? nodeMap.get(edge.to) : this.nodes.find(n => n.id === edge.to);
           if (!u || !v) continue;
 
-          ctx.save();
           const isAnchoredEdge = u.isConnected && v.isConnected;
 
           if (isAnchoredEdge) {
@@ -5433,9 +5567,8 @@
           ctx.beginPath();
           ctx.arc(dotX, dotY, 2.5, 0, Math.PI * 2);
           ctx.fill();
-
-          ctx.restore();
         }
+        ctx.restore();
       }
 
       drawDragTether(ctx) {
