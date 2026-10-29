@@ -254,8 +254,10 @@
       box-shadow: 0 0 25px rgba(255, 0, 85, 0.55), inset 0 0 15px rgba(255, 0, 85, 0.2);
       pointer-events: none;
       opacity: 0;
+      visibility: hidden;
       transition: opacity 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
                   transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                  visibility 0.25s ease,
                   border-color 0.2s ease,
                   box-shadow 0.2s ease;
       z-index: 30;
@@ -264,6 +266,7 @@
 
     #warning-toast.show {
       opacity: 1;
+      visibility: visible;
       transform: translateX(-50%) translateY(0);
     }
 
@@ -277,10 +280,13 @@
 
     #warning-toast .toast-icon {
       font-size: 1.1rem;
+    }
+
+    #warning-toast.show .toast-icon {
       animation: pulseAlert 0.6s infinite alternate;
     }
 
-    #warning-toast.positive .toast-icon {
+    #warning-toast.positive.show .toast-icon {
       animation: pulsePositive 0.7s infinite alternate;
     }
 
@@ -330,12 +336,14 @@
       padding: 20px;
       z-index: 100;
       opacity: 0;
+      visibility: hidden;
       pointer-events: none;
-      transition: opacity 0.35s ease;
+      transition: opacity 0.35s ease, visibility 0.35s ease;
     }
 
     .modal-backdrop.open {
       opacity: 1;
+      visibility: visible;
       pointer-events: auto;
     }
 
@@ -577,8 +585,11 @@
       position: absolute;
       inset: -100%;
       background: linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.08) 50%, transparent 60%);
-      animation: shimmerPass 4s infinite linear;
       pointer-events: none;
+    }
+
+    #modal-win-reveal.open .bday-card-shimmer {
+      animation: shimmerPass 4s infinite linear;
     }
 
     @keyframes shimmerPass {
@@ -2628,16 +2639,6 @@
         // 2. Base Node Body by Type
         if (this.type === 'observed') {
           // Standard Observed Node: Solid circle with distinct Amber (Parent) vs Cyan (Child) gradient
-          if (glowSprites) {
-            const sprite = isParent
-              ? (this.isConnected ? glowSprites.parentConnected : glowSprites.parentUnconnected)
-              : (this.isConnected ? glowSprites.childConnected : glowSprites.childUnconnected);
-            if (sprite) {
-              const sz = sprite.logicalSize * (r / sprite.radius);
-              ctx.drawImage(sprite.canvas, this.x - sz / 2, this.y - sz / 2, sz, sz);
-            }
-          }
-
           if (bodySprites) {
             const bSprite = isParent
               ? (this.isConnected ? bodySprites.parentConnected : bodySprites.parentUnconnected)
@@ -2647,6 +2648,16 @@
               ctx.drawImage(bSprite.canvas, this.x - sz / 2, this.y - sz / 2, sz, sz);
             }
           } else {
+            if (glowSprites) {
+              const sprite = isParent
+                ? (this.isConnected ? glowSprites.parentConnected : glowSprites.parentUnconnected)
+                : (this.isConnected ? glowSprites.childConnected : glowSprites.childUnconnected);
+              if (sprite) {
+                const sz = sprite.logicalSize * (r / sprite.radius);
+                ctx.drawImage(sprite.canvas, this.x - sz / 2, this.y - sz / 2, sz, sz);
+              }
+            }
+
             const grad = ctx.createRadialGradient(this.x, this.y, 2, this.x, this.y, r);
             if (isParent) {
               grad.addColorStop(0, '#FFFDF0');
@@ -3850,17 +3861,33 @@
         this.bodySprites = {};
         const dpr = this.dpr || 1;
         const nominalR = 21;
-        const pad = 6;
-        const logicalSize = Math.ceil((nominalR + pad) * 2);
-        const center = logicalSize / 2;
 
         const createBody = (isParent, isConnected) => {
+          const blur = isConnected ? 16 : 9;
+          const pad = blur * 2 + 8;
+          const logicalSize = Math.ceil((nominalR + pad) * 2);
+          const center = logicalSize / 2;
+          const glowColor = isParent ? '#FFB800' : '#00F0FF';
+
           const canvas = document.createElement('canvas');
           canvas.width = Math.ceil(logicalSize * dpr);
           canvas.height = Math.ceil(logicalSize * dpr);
           const ctx = canvas.getContext('2d');
           ctx.scale(dpr, dpr);
 
+          // 1. Integrated Glow Aura pass
+          ctx.shadowColor = glowColor;
+          ctx.shadowBlur = blur;
+          ctx.fillStyle = glowColor;
+          ctx.beginPath();
+          ctx.arc(center, center, nominalR, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Reset shadow so gradient and border remain crisp
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+
+          // 2. Radial Gradient Circle
           const grad = ctx.createRadialGradient(center, center, 2, center, center, nominalR);
           if (isParent) {
             grad.addColorStop(0, '#FFFDF0');
@@ -3877,6 +3904,7 @@
           ctx.arc(center, center, nominalR, 0, Math.PI * 2);
           ctx.fill();
 
+          // 3. Crisp Border
           ctx.strokeStyle = isConnected
             ? (isParent ? '#FFE082' : '#E0F7FF')
             : (isParent ? 'rgba(255, 224, 130, 0.85)' : 'rgba(128, 245, 255, 0.85)');
@@ -5671,12 +5699,14 @@
         this.physicsAccumulator = (this.physicsAccumulator || 0) + delta;
         const step = 1000 / 60; // 16.667ms per tick (60Hz target)
         let steps = 0;
-        while (this.physicsAccumulator >= step && steps < 3) {
+        // Jitter tolerance: step once smoothly when accumulator is near 60Hz (~14ms - 19ms)
+        // to completely eliminate 0-then-2 step oscillation from Android rAF timing variance
+        while (this.physicsAccumulator >= step * 0.85 && steps < 2) {
           this.updatePhysics();
-          this.physicsAccumulator -= step;
+          this.physicsAccumulator = Math.max(0, this.physicsAccumulator - step);
           steps++;
         }
-        if (this.physicsAccumulator > step) {
+        if (this.physicsAccumulator > step * 1.5) {
           this.physicsAccumulator = 0;
         }
 
