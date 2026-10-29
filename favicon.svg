@@ -1,146 +1,47 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 210" width="210" height="210">
+  <defs>
+    <!-- Cyan Arrow Marker for Node 2 -> Node 1 -->
+    <marker id="arrow-cyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#00F0FF" />
+    </marker>
+    <!-- Magenta Arrow Marker for Node 3 -> Node 2 -->
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#B026FF" />
+    </marker>
+    <!-- Amber Arrow Marker for Node 1 -> Node 3 -->
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#FFB800" />
+    </marker>
 
-<svg
-   width="210mm"
-   height="210mm"
-   viewBox="0 0 210 210"
-   version="1.1"
-   id="svg1"
-   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
-   sodipodi:docname="favicon.svg"
-   inkscape:export-filename="favicon.ico"
-   inkscape:export-xdpi="96"
-   inkscape:export-ydpi="96"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg">
-  <sodipodi:namedview
-     id="namedview1"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     inkscape:document-units="mm"
-     showguides="false"
-     inkscape:zoom="0.52410024"
-     inkscape:cx="346.3078"
-     inkscape:cy="445.52546"
-     inkscape:window-width="1408"
-     inkscape:window-height="822"
-     inkscape:window-x="0"
-     inkscape:window-y="31"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="layer1" />
-  <defs
-     id="defs1">
-    <marker
-       style="overflow:visible"
-       id="ArrowWideRounded"
-       refX="4"
-       refY="0"
-       orient="auto-start-reverse"
-       inkscape:stockid="Wide, rounded arrow"
-       markerWidth="0.9"
-       markerHeight="0.9"
-       viewBox="0 0 1 1"
-       inkscape:isstock="true"
-       inkscape:collect="always"
-       preserveAspectRatio="xMidYMid">
-      <path
-         style="fill:none;stroke:context-stroke;stroke-width:1;stroke-linecap:round"
-         d="M 3,-3 0,0 3,3"
-         transform="rotate(180,0.125,0)"
-         sodipodi:nodetypes="ccc"
-         id="path6" />
-    </marker>
-    <marker
-       style="overflow:visible"
-       id="ArrowWideRounded-7"
-       refX="4"
-       refY="0"
-       orient="auto-start-reverse"
-       inkscape:stockid="Wide, rounded arrow"
-       markerWidth="0.89999998"
-       markerHeight="0.89999998"
-       viewBox="0 0 1 1"
-       inkscape:isstock="true"
-       inkscape:collect="always"
-       preserveAspectRatio="xMidYMid">
-      <path
-         style="fill:none;stroke:context-stroke;stroke-width:1;stroke-linecap:round"
-         d="M 3,-3 0,0 3,3"
-         transform="rotate(180,0.125,0)"
-         sodipodi:nodetypes="ccc"
-         id="path6-2" />
-    </marker>
-    <marker
-       style="overflow:visible"
-       id="ArrowWideRounded-7-1"
-       refX="4"
-       refY="0"
-       orient="auto-start-reverse"
-       inkscape:stockid="Wide, rounded arrow"
-       markerWidth="0.89999998"
-       markerHeight="0.89999998"
-       viewBox="0 0 1 1"
-       inkscape:isstock="true"
-       inkscape:collect="always"
-       preserveAspectRatio="xMidYMid">
-      <path
-         style="fill:none;stroke:context-stroke;stroke-width:1;stroke-linecap:round"
-         d="M 3,-3 0,0 3,3"
-         transform="rotate(180,0.125,0)"
-         sodipodi:nodetypes="ccc"
-         id="path6-2-4" />
-    </marker>
+    <!-- Subtle gradient for dark background -->
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#070B14" />
+    </radialGradient>
   </defs>
-  <g
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer"
-     id="layer1">
-    <rect
-       style="fill:#5a7699;stroke:none;stroke-width:0.633;stroke-linejoin:round;fill-opacity:1"
-       id="rect1"
-       width="210"
-       height="210"
-       x="0"
-       y="0" />
-    <circle
-       style="fill:none;fill-opacity:1;stroke:#2e3b4e;stroke-width:8.74536;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-       id="path2"
-       cx="45.435009"
-       cy="96.928017"
-       r="25.245157" />
-    <circle
-       style="fill:none;fill-opacity:1;stroke:#2e3b4e;stroke-width:8.74536;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-       id="path2-5"
-       cx="155.07283"
-       cy="51.99192"
-       r="25.245157" />
-    <circle
-       style="fill:none;fill-opacity:1;stroke:#2e3b4e;stroke-width:8.74536;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-       id="path2-7"
-       cx="138.72659"
-       cy="162.49318"
-       r="25.245157" />
-    <path
-       style="fill:none;fill-opacity:1;stroke:#2e3b4e;stroke-width:6.73301;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#ArrowWideRounded)"
-       d="M 131.88186,61.966736 C 68.356588,86.348831 68.356588,86.348831 68.356588,86.348831"
-       id="path3" />
-    <path
-       style="fill:none;fill-opacity:1;stroke:#2e3b4e;stroke-width:6.73301;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#ArrowWideRounded-7)"
-       d="M 143.77493,136.74319 153.0535,78.246745"
-       id="path3-5"
-       sodipodi:nodetypes="cc" />
-    <path
-       style="fill:none;fill-opacity:1;stroke:#2e3b4e;stroke-width:6.73301;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#ArrowWideRounded-7-1)"
-       d="M 114.7321,149.80642 62.420986,115.03714"
-       id="path3-5-3"
-       sodipodi:nodetypes="cc" />
-  </g>
+
+  <!-- Background rounded canvas -->
+  <rect width="210" height="210" rx="42" fill="url(#bgGrad)" />
+
+  <!-- Directed Causal Edges with Arrowheads -->
+  <!-- Edge from Node 2 (155, 52) to Node 1 (45, 97) -->
+  <path d="M 131.88 61.97 C 68.36 86.35 68.36 86.35 68.36 86.35"
+        fill="none" stroke="#00F0FF" stroke-width="8" stroke-linecap="round" marker-start="url(#arrow-cyan)" />
+
+  <!-- Edge from Node 3 (138, 162) to Node 2 (155, 52) -->
+  <path d="M 143.77 136.74 L 153.05 78.25"
+        fill="none" stroke="#B026FF" stroke-width="8" stroke-linecap="round" marker-start="url(#arrow-purple)" />
+
+  <!-- Edge from Node 3 (138, 162) to Node 1 (45, 97) -->
+  <path d="M 114.73 149.81 L 62.42 115.04"
+        fill="none" stroke="#FFB800" stroke-width="8" stroke-linecap="round" marker-start="url(#arrow-amber)" />
+
+  <!-- Node 1 (Left) -->
+  <circle cx="45.4" cy="96.9" r="25.2" fill="#0D1529" stroke="#00F0FF" stroke-width="9" />
+
+  <!-- Node 2 (Top Right) -->
+  <circle cx="155.1" cy="52.0" r="25.2" fill="#0D1529" stroke="#B026FF" stroke-width="9" />
+
+  <!-- Node 3 (Bottom Right) -->
+  <circle cx="138.7" cy="162.5" r="25.2" fill="#0D1529" stroke="#FFB800" stroke-width="9" />
 </svg>
