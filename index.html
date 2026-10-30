@@ -877,7 +877,7 @@
           </div>
           <div class="rule-card-text">
             <div class="rule-card-header">
-              <h4>1. Connect Nodes</h4>
+              <h4>Connect Nodes</h4>
               <span class="rule-pill-tag amber">Amber ➔ Cyan</span>
             </div>
             <p><strong>Drag</strong> between nodes to create directed causes (A → B). <strong>Amber (Parent)</strong> nodes radiate arrows outward and must point <em>into</em> nodes. <strong>Cyan (Child)</strong> nodes stream arrows inward and must <em>receive</em> edges.</p>
@@ -891,8 +891,8 @@
           </div>
           <div class="rule-card-text">
             <div class="rule-card-header">
-              <h4>2. Never Form a Loop</h4>
-              <span class="rule-pill-tag pink">Instant Collapse 💀</span>
+              <h4>Never Form a Loop</h4>
+              <span class="rule-pill-tag pink">Indefinite causality 💀</span>
             </div>
             <p>Causality moves strictly forward. Connecting an edge back to any ancestor node creates a cycle and triggers an <strong>instant time paradox (Game Over)</strong>!</p>
           </div>
@@ -905,7 +905,7 @@
           </div>
           <div class="rule-card-text">
             <div class="rule-card-header">
-              <h4>3. Diamonds &amp; Capacity</h4>
+              <h4>Diamonds &amp; Capacity</h4>
               <span class="rule-pill-tag amber">+3 Slots ●</span>
             </div>
             <p>You start with only <strong>3 node slots (● 1/3)</strong>. Create multiple paths between nodes to form a <strong>Diamond (💎)</strong> and expand your capacity by <strong>+3</strong>!</p>
@@ -919,7 +919,7 @@
           </div>
           <div class="rule-card-text">
             <div class="rule-card-header">
-              <h4>4. Drifting Pairs</h4>
+              <h4>Drifting Pairs</h4>
               <span class="rule-pill-tag purple">Pre-Linked 🔗</span>
             </div>
             <p>Some nodes drift in correlated pairs. Dragging either node into your graph <strong>anchors and saves both nodes</strong> at once!</p>
@@ -933,15 +933,15 @@
           </div>
           <div class="rule-card-text">
             <div class="rule-card-header">
-              <h4>5. Latent Variables (U)</h4>
-              <span class="rule-pill-tag purple">Reduction 🌌</span>
+              <h4>Latent Variables (U)</h4>
+              <span class="rule-pill-tag purple">Mediation</span>
             </div>
             <p>Dashed purple nodes (<strong>U</strong>) are not observed. Routing through them (X → U → Y) <strong>dissolves U</strong> and collapses into a direct cause-and-effect link (X → Y)!</p>
           </div>
         </div>
       </div>
 
-      <button class="btn-primary" id="btn-close-info">Got it, Resume Spacetime</button>
+      <button class="btn-primary" id="btn-close-info">Got it!</button>
       <!-- <div class="modal-footer-tip">Press [Esc], click outside, or click ✕ to return to game</div> -->
     </div>
   </div>
@@ -3428,6 +3428,7 @@
         this.mergedLatentsCount = 0;
         this.clusterCounter = 1;
         this.guideAnimator = new GuideAnimator();
+        this.hasShownInstructions = false;
 
         // Graph Entities
         this.nodes = [];
@@ -3627,9 +3628,11 @@
         }
       }
 
-      openInfoModal() {
-        sound.init();
-        sound.playSelect();
+      openInfoModal(playSound = true) {
+        if (playSound) {
+          sound.init();
+          sound.playSelect();
+        }
         this.isPaused = true;
         const modal = document.getElementById('modal-info');
         if (modal) modal.classList.add('open');
@@ -3972,6 +3975,12 @@
         }
 
         this.updateHUD();
+
+        // Start first level with instructions open so the player can read before going in
+        if (lvl === 1 && !this.hasShownInstructions) {
+          this.hasShownInstructions = true;
+          this.openInfoModal(false);
+        }
       }
 
       spawnEntangledPair(isInitial = false) {
