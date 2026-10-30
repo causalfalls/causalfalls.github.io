@@ -3135,7 +3135,6 @@
         } else if (isConnected) {
           const energyT = ((elapsed - 1920) / 550) % 1;
           this.drawEdge(ctx, aX, aY, bX, bY, true, energyT);
-          this.drawBadge(ctx, '✓ CONNECTED', 72, 14, 'cyan');
         }
 
         this.drawNode(ctx, aX, aY, aR, 'A', 'observed', 'parent', isConnected);
@@ -3143,6 +3142,10 @@
 
         if (handAlpha > 0) {
           this.drawHand(ctx, handX, handY, handPress, handAlpha);
+        }
+
+        if (isConnected) {
+          this.drawBadge(ctx, '✓ CONNECTED', 72, 14, 'cyan');
         }
 
         this.endRender(ctx);
@@ -3203,8 +3206,6 @@
           ctx.beginPath();
           ctx.arc(aX, aY, aR + 12 + Math.sin(elapsed * 0.015) * 3, 0, Math.PI * 2);
           ctx.stroke();
-
-          this.drawBadge(ctx, '⚠️ PARADOX! (LOOP)', 72, 12, 'pink');
         }
 
         this.drawNode(ctx, aX, aY, aR, 'A', 'observed', 'child', true, elapsed * 0.006, isHazard);
@@ -3213,6 +3214,10 @@
 
         if (handAlpha > 0) {
           this.drawHand(ctx, handX, handY, handPress, handAlpha);
+        }
+
+        if (isHazard) {
+          this.drawBadge(ctx, '⚠️ PARADOX! (LOOP)', 72, 12, 'pink');
         }
 
         this.endRender(ctx);
@@ -3292,8 +3297,6 @@
           ctx.shadowBlur = 10;
           ctx.fillText('💎', 72, 46);
           ctx.shadowBlur = 0;
-
-          this.drawBadge(ctx, '💎 +3 CAPACITY!', 72, 14, 'amber');
         }
 
         this.drawEdge(ctx, aX, aY, bX, bY, true, (elapsed / 700) % 1);
@@ -3313,6 +3316,10 @@
 
         if (handAlpha > 0) {
           this.drawHand(ctx, handX, handY, handPress, handAlpha);
+        }
+
+        if (isClosed) {
+          this.drawBadge(ctx, '💎 +3 CAPACITY!', 72, 14, 'amber');
         }
 
         this.endRender(ctx);
@@ -3370,7 +3377,6 @@
           this.drawEdge(ctx, rX, rY, handX, handY, false);
         } else if (isAnchored) {
           this.drawEdge(ctx, rX, rY, m1X, m1Y, true, (elapsed / 600) % 1);
-          this.drawBadge(ctx, '🔗 PAIR ANCHORED!', 72, 14, 'purple');
         }
 
         this.drawNode(ctx, rX, rY, rR, 'R', 'observed', 'root', true);
@@ -3379,6 +3385,10 @@
 
         if (handAlpha > 0) {
           this.drawHand(ctx, handX, handY, handPress, handAlpha);
+        }
+
+        if (isAnchored) {
+          this.drawBadge(ctx, '🔗 PAIR ANCHORED!', 72, 14, 'purple');
         }
 
         this.endRender(ctx);
@@ -3428,7 +3438,6 @@
         if (isReduced) {
           const energyT = ((elapsed - 1600) / 500) % 1;
           this.drawEdge(ctx, xX, xY, yX, yY, true, energyT);
-          this.drawBadge(ctx, '✨ REDUCED: X ➔ Y', 72, 14, 'purple');
 
           if (t < 0.65) {
             ctx.save();
@@ -3460,6 +3469,10 @@
 
         if (handAlpha > 0) {
           this.drawHand(ctx, handX, handY, handPress, handAlpha);
+        }
+
+        if (isReduced) {
+          this.drawBadge(ctx, '✨ REDUCED: X ➔ Y', 72, 14, 'purple');
         }
 
         this.endRender(ctx);
