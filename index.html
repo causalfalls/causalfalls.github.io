@@ -2985,40 +2985,104 @@
         ctx.restore();
       }
 
+      drawWarningTriangle(ctx, cx, cy, size = 10) {
+        ctx.save();
+        const halfW = (size * 1.1) / 2;
+        const halfH = size / 2;
+        const topY = cy - halfH;
+        const botY = cy + halfH;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, topY);
+        ctx.lineTo(cx + halfW, botY);
+        ctx.lineTo(cx - halfW, botY);
+        ctx.closePath();
+
+        ctx.fillStyle = '#FFE500';
+        ctx.fill();
+        ctx.strokeStyle = '#DDAA00';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+
+        ctx.fillStyle = '#05070E';
+        ctx.font = '900 7px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('!', cx, cy + 1.1);
+        ctx.restore();
+      }
+
       drawBadge(ctx, text, x, y, type = 'cyan') {
         ctx.save();
-        ctx.font = 'bold 9px JetBrains Mono, monospace';
-        const tw = ctx.measureText(text).width;
-        const pw = tw + 14;
-        const ph = 17;
-        const bx = x - pw / 2;
-        const by = y - ph / 2;
+        ctx.font = '700 8.5px "JetBrains Mono", monospace';
+
+        // Check if text starts with a warning icon or other special symbol
+        const isWarning = /^⚠️|^⚠/.test(text);
+        let icon = null;
+        let label = text;
+
+        if (isWarning) {
+          icon = 'warning';
+          label = text.replace(/^⚠️\s*|^⚠\s*/, '');
+        } else {
+          const match = text.match(/^([\u2600-\u27BF\uFE0F\uD83C-\uDBFF\uDC00-\uDFFF✓💎🔗✨]+)\s*(.*)$/);
+          if (match) {
+            icon = match[1];
+            label = match[2];
+          }
+        }
+
+        const iconWidth = icon ? 11 : 0;
+        const gap = icon ? 4 : 0;
+        const labelWidth = ctx.measureText(label).width;
+        const contentWidth = iconWidth + gap + labelWidth;
+
+        const pw = Math.min(this.logicalW - 12, contentWidth + 14);
+        const ph = 16;
+        const bx = Math.round(x - pw / 2);
+        const by = Math.round(y - ph / 2);
 
         ctx.beginPath();
         if (ctx.roundRect) {
-          ctx.roundRect(bx, by, pw, ph, 8);
+          ctx.roundRect(bx, by, pw, ph, 7);
         } else {
           ctx.rect(bx, by, pw, ph);
         }
 
         if (type === 'pink') {
-          ctx.fillStyle = 'rgba(255, 0, 85, 0.9)';
+          ctx.fillStyle = 'rgba(255, 0, 85, 0.95)';
           ctx.strokeStyle = '#FFA0BC';
         } else if (type === 'amber') {
           ctx.fillStyle = 'rgba(255, 184, 0, 0.95)';
           ctx.strokeStyle = '#FFF';
+        } else if (type === 'purple') {
+          ctx.fillStyle = 'rgba(176, 38, 255, 0.95)';
+          ctx.strokeStyle = '#E9B8FF';
         } else {
-          ctx.fillStyle = 'rgba(0, 240, 255, 0.9)';
+          ctx.fillStyle = 'rgba(0, 240, 255, 0.95)';
           ctx.strokeStyle = '#FFF';
         }
         ctx.lineWidth = 1;
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = (type === 'pink') ? '#FFFFFF' : '#030712';
-        ctx.textAlign = 'center';
+        const startX = Math.round(x - contentWidth / 2);
+
+        if (icon === 'warning') {
+          this.drawWarningTriangle(ctx, startX + iconWidth / 2, y, 10);
+        } else if (icon) {
+          ctx.font = '10px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(icon, startX + iconWidth / 2, y);
+        }
+
+        ctx.font = '700 8.5px "JetBrains Mono", monospace';
+        ctx.fillStyle = (type === 'pink' || type === 'purple') ? '#FFFFFF' : '#030712';
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(text, x, y + 0.5);
+        ctx.fillText(label, startX + iconWidth + gap, y);
+
         ctx.restore();
       }
 
@@ -3091,9 +3155,9 @@
         const cycle = 3400;
         const t = (elapsed % cycle) / cycle;
 
-        const aX = 32, aY = 28, aR = 12;
-        const bX = 112, bY = 28, bR = 12;
-        const cX = 72, cY = 70, cR = 12;
+        const aX = 32, aY = 32, aR = 12;
+        const bX = 112, bY = 32, bR = 12;
+        const cX = 72, cY = 72, cR = 12;
 
         this.drawEdge(ctx, aX, aY, bX, bY, true, (elapsed / 800) % 1);
         this.drawEdge(ctx, bX, bY, cX, cY, true, ((elapsed + 300) / 800) % 1);
@@ -3140,7 +3204,7 @@
           ctx.arc(aX, aY, aR + 12 + Math.sin(elapsed * 0.015) * 3, 0, Math.PI * 2);
           ctx.stroke();
 
-          this.drawBadge(ctx, '⚠️ PARADOX! (LOOP)', 72, 48, 'pink');
+          this.drawBadge(ctx, '⚠️ PARADOX! (LOOP)', 72, 12, 'pink');
         }
 
         this.drawNode(ctx, aX, aY, aR, 'A', 'observed', 'child', true, elapsed * 0.006, isHazard);
