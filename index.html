@@ -578,116 +578,6 @@
       border-color: rgba(255, 255, 255, 0.3);
     }
 
-    /* Birthday Card & Gift Reveal Styling */
-    .bday-card-container {
-      background: linear-gradient(145deg, rgba(28, 18, 56, 0.9) 0%, rgba(14, 25, 48, 0.95) 100%);
-      border: 1.5px solid transparent;
-      border-image: linear-gradient(135deg, var(--amber-gold), var(--purple-neon), var(--cyan-neon)) 1;
-      border-radius: 20px;
-      padding: 22px 18px;
-      margin: 18px 0;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .bday-card-shimmer {
-      position: absolute;
-      inset: -100%;
-      background: linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.08) 50%, transparent 60%);
-      pointer-events: none;
-    }
-
-    #modal-win-reveal.open .bday-card-shimmer {
-      animation: shimmerPass 4s infinite linear;
-    }
-
-    @keyframes shimmerPass {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
-
-    .bday-greeting-text {
-      font-family: var(--font-display);
-      font-size: 1.15rem;
-      color: #FFF;
-      font-weight: 700;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .bday-subtext {
-      font-size: 0.84rem;
-      line-height: 1.5;
-      color: #E2E8F0;
-      margin-bottom: 16px;
-    }
-
-    .voucher-box {
-      background: rgba(7, 11, 20, 0.85);
-      border: 1.5px dashed var(--amber-gold);
-      border-radius: 14px;
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 10px;
-      box-shadow: inset 0 0 16px rgba(255, 184, 0, 0.08);
-    }
-
-    .voucher-label {
-      font-size: 0.68rem;
-      font-family: var(--font-mono);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--amber-gold);
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .voucher-code-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .voucher-code {
-      font-family: var(--font-mono);
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: #FFF;
-      background: rgba(255, 255, 255, 0.06);
-      padding: 6px 10px;
-      border-radius: 8px;
-      flex: 1;
-      text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .btn-copy {
-      padding: 8px 14px;
-      border-radius: 8px;
-      border: none;
-      background: var(--amber-gold);
-      color: #030712;
-      font-weight: 700;
-      font-size: 0.78rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-    }
-
-    .btn-copy.copied {
-      background: #10B981;
-      color: #FFF;
-    }
-
     /* Stats Grid */
     .dag-stats-grid {
       display: grid;
@@ -1107,7 +997,7 @@
     </div>
   </div>
 
-  <!-- Modal: Final Grand Win State & Birthday Card Reveal -->
+  <!-- Modal: Final Grand Win State -->
   <div class="modal-backdrop" id="modal-win-reveal">
     <div class="modal-card" style="border-color: var(--amber-gold); box-shadow: 0 16px 48px rgba(0,0,0,0.8), 0 0 35px rgba(255, 184, 0, 0.25);">
       <div class="modal-badge" style="border-color: var(--amber-gold); color: var(--amber-gold); background: rgba(255, 184, 0, 0.1);">
@@ -1149,30 +1039,6 @@
 
       <!-- Final DAG Inspector Container -->
       <div class="modal-dag-anchor" id="dag-inspect-anchor-win-reveal"></div>
-
-      <!-- Animated Birthday Card -->
-      <div class="bday-card-container">
-        <div class="bday-card-shimmer"></div>
-        <div class="bday-greeting-text">
-          <span>🎂 Feliz aniversário! 🚀</span>
-        </div>
-        <p class="bday-subtext">
-          Que os seus 27 anos possam causar mais anos de muita alegria e realizações! Agora é hora de receber presente 🎁
-        </p>
-
-        <div class="voucher-box">
-          <div class="voucher-label">
-            <span>Me diga a seguinte senha:</span>
-          </div>
-          <div class="voucher-code-row">
-            <div class="voucher-code" id="voucher-code-display">"Sorvete de tubarão"</div>
-            <button class="btn-copy" id="btn-copy-voucher">
-              <span id="btn-copy-icon">📋</span>
-              <span id="btn-copy-label">Copy</span>
-            </button>
-          </div>
-        </div>
-      </div>
 
       <button class="btn-primary" id="btn-play-again" style="background: linear-gradient(135deg, var(--amber-gold), #FF8800); color: #070B14;">
         ✨ Enter Infinite Causal Sandbox Mode
@@ -3688,29 +3554,6 @@
           document.getElementById('modal-win-reveal').classList.remove('open');
           this.isInfiniteMode = false;
           this.startLevel(1);
-        });
-
-        // Copy Voucher Code button
-        const btnCopy = document.getElementById('btn-copy-voucher');
-        btnCopy.addEventListener('click', () => {
-          const code = document.getElementById('voucher-code-display').textContent.trim();
-          sound.init();
-          sound.playConnect();
-
-          navigator.clipboard.writeText(code).then(() => {
-            btnCopy.classList.add('copied');
-            document.getElementById('btn-copy-icon').textContent = '✓';
-            document.getElementById('btn-copy-label').textContent = 'Copied!';
-            setTimeout(() => {
-              btnCopy.classList.remove('copied');
-              document.getElementById('btn-copy-icon').textContent = '📋';
-              document.getElementById('btn-copy-label').textContent = 'Copy';
-            }, 2500);
-          }).catch(() => {
-            // Fallback for sandboxes without clipboard permission
-            btnCopy.classList.add('copied');
-            document.getElementById('btn-copy-label').textContent = 'Copied!';
-          });
         });
 
         // Settings buttons group touch isolation
